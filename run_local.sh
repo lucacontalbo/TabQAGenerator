@@ -20,7 +20,7 @@ source "$ACTIVATE"
 echo "Python: $(python3 --version)"
 
 # Install backend deps into the active env (fast no-op if already installed)
-python3 -m pip install --quiet fastapi "uvicorn[standard]" python-multipart aiofiles
+python3 -m pip install --quiet fastapi "uvicorn[standard]" python-multipart aiofiles "anthropic>=0.30.0"
 
 # Load OPENAI_API_KEY from gradino/.env if not already in environment
 if [ -z "$OPENAI_API_KEY" ] && [ -f "$SCRIPT_DIR/gradino/.env" ]; then
