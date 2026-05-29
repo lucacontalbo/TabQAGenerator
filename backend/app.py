@@ -163,7 +163,7 @@ async def _run_generation(task_id: str, params: dict):
         await stderr_task
         stderr_output = b"".join(stderr_chunks).decode(errors="replace").strip()
         if stderr_output:
-            print(f"[generate_script stderr]\n{stderr_output[:4000]}", file=_sys.stderr, flush=True)
+            print(f"[generate_script stderr]\n{stderr_output[:4000]}", file=sys.stderr, flush=True)
 
         if task["status"] == "running":
             if proc.returncode == 0:
