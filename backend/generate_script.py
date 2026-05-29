@@ -71,6 +71,8 @@ def main():
     gradino_path = os.environ.get("GRADINO_PATH", "/app/gradino")
     if gradino_path not in sys.path:
         sys.path.insert(0, gradino_path)
+    # Gradino loads prompt/domain files with relative paths — must run from its own dir
+    os.chdir(gradino_path)
 
     emit({"type": "status", "message": "Importing Gradino modules…"})
 
