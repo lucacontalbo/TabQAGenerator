@@ -15,6 +15,9 @@ RUN curl -sSfL \
     | grep -v '^\s*#' | grep -v '^\s*$' > /tmp/gradino_req.txt \
     && pip install --no-cache-dir -r /tmp/gradino_req.txt
 
+# Install transitive deps missing from Gradino's requirements.txt
+RUN pip install --no-cache-dir rdflib
+
 # Clone Gradino source from master (read-only — no modifications to this repo)
 RUN git clone --depth 1 --branch master \
     https://github.com/softlab-unimore/Gradino.git /app/gradino
