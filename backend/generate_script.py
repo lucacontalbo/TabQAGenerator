@@ -124,15 +124,23 @@ def main():
                 sequential=sequential,
             )
 
-        # Diagnostic: log structure of returned samples
-        print(f"[DEBUG] samples keys: {list(samples.keys()) if samples else 'empty'}", file=sys.stderr, flush=True)
-        for sk in (samples or {}):
-            for mk in samples[sk]:
-                for pk in samples[sk][mk]:
-                    v = samples[sk][mk][pk]
-                    print(f"[DEBUG] samples[{sk!r}][{mk!r}][{pk!r}] = {type(v).__name__} shape={getattr(v, 'shape', '?')}", file=sys.stderr, flush=True)
-        if error_logs:
-            print(f"[DEBUG] error_logs ({len(error_logs)}): {[str(e)[:200] for e in error_logs[:5]]}", file=sys.stderr, flush=True)
+        # Safely convert error_logs to a plain list (Gradino may return a custom object)
+        try:
+            error_list = [str(e) for e in (error_logs or [])]
+        except Exception as _el_exc:
+            error_list = [f"(could not read error_logs: {_el_exc})"]
+
+        # Diagnostic: dump to stderr so it appears in docker compose logs
+        try:
+            print(f"[DEBUG] samples type={type(samples).__name__} keys={list(samples.keys()) if hasattr(samples, 'keys') else '?'}", file=sys.stderr, flush=True)
+            for sk in (samples or {}):
+                for mk in samples[sk]:
+                    for pk in samples[sk][mk]:
+                        v = samples[sk][mk][pk]
+                        print(f"[DEBUG]  [{sk!r}][{mk!r}][{pk!r}] → {type(v).__name__} shape={getattr(v, 'shape', '?')}", file=sys.stderr, flush=True)
+        except Exception as _dbg_exc:
+            print(f"[DEBUG] samples inspection failed: {_dbg_exc}", file=sys.stderr, flush=True)
+        print(f"[DEBUG] error_list ({len(error_list)}): {error_list[:3]}", file=sys.stderr, flush=True)
 
         # Serialize DataFrames to JSON-serialisable dicts
         import pandas as pd
@@ -145,21 +153,19 @@ def main():
                 for k2 in samples[nt_key][k1]:
                     df = samples[nt_key][k1][k2]
                     if not isinstance(df, pd.DataFrame):
-                        print(f"[DEBUG] skipping non-DataFrame at [{nt_key}][{k1}][{k2}]: {type(df)}", file=sys.stderr, flush=True)
+                        print(f"[DEBUG] skipping non-DataFrame [{nt_key}][{k1}][{k2}]: {type(df).__name__}", file=sys.stderr, flush=True)
                         continue
                     records = []
                     for _, row in df.iterrows():
                         record: dict = {}
                         for col in df.columns:
                             val = row[col]
-                            # Normalize value
                             if isinstance(val, float) and val != val:  # NaN
                                 record[col] = None
                             elif isinstance(val, (int, float, bool)):
                                 record[col] = val
                             else:
                                 s = str(val)
-                                # Try to decode JSON-encoded lists/dicts
                                 if s and s[0] in ('[', '{'):
                                     try:
                                         record[col] = json.loads(s)
@@ -170,15 +176,13 @@ def main():
                         records.append(record)
                     output[str(nt_key)][k1][k2] = records
 
-        total_records = sum(
-            len(output[a][b][c]) for a in output for b in output[a] for c in output[a][b]
-        )
-        print(f"[DEBUG] output keys: {list(output.keys())}, total_records={total_records}", file=sys.stderr, flush=True)
+        total_records = sum(len(output[a][b][c]) for a in output for b in output[a] for c in output[a][b])
+        print(f"[DEBUG] output keys={list(output.keys())} total_records={total_records}", file=sys.stderr, flush=True)
 
         emit({
             "type": "result",
             "data": output,
-            "errors": [str(e) for e in (error_logs or [])],
+            "errors": error_list,
         })
 
     except Exception as exc:
