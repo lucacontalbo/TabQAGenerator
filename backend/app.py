@@ -65,7 +65,7 @@ def _flatten_instances(data: dict) -> list:
     """Convert Gradino's nested {nt: {method: {pert: [records]}}} into a flat list."""
     instances = []
     idx = 0
-    for nt_key in sorted(data.keys()):
+    for nt_key in sorted(data.keys(), key=lambda k: int(k) if k.lstrip("-").isdigit() else k):
         for method_key, pert_dict in data[nt_key].items():
             for pert_key, records in pert_dict.items():
                 for rec in records:
