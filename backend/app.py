@@ -62,6 +62,17 @@ def _extract_tables(raw) -> list:
     return found if found else ([s] if s.strip() else [])
 
 
+def _to_list(raw) -> list:
+    """Ensure a value is always returned as a list."""
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, str):
+        return [raw] if raw.strip() else []
+    return [raw]
+
+
 def _flatten_instances(data: dict) -> list:
     """Convert Gradino's nested {nt: {method: {pert: [records]}}} into a flat list."""
     instances = []
@@ -78,7 +89,7 @@ def _flatten_instances(data: dict) -> list:
                         "question": str(rec.get("Question") or ""),
                         "tables": _extract_tables(rec.get("Table")),
                         "answer": str(rec.get("Label") or ""),
-                        "sql_queries": rec.get("SQL Query") or [],
+                        "sql_queries": _to_list(rec.get("SQL Query")),
                         "constraints": rec.get("Constraints") or {},
                     })
                     idx += 1

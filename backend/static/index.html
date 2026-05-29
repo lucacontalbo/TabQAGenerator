@@ -580,7 +580,7 @@ function InstanceEditorModal({ instance, taskId, onSave, onClose }) {
                 <input value={answer} onChange={e => setAnswer(e.target.value)}
                   className={inputCls} placeholder="Enter the answer..."/>
               </div>
-              {instance.sql_queries && instance.sql_queries.length > 0 && (
+              {Array.isArray(instance.sql_queries) && instance.sql_queries.length > 0 && (
                 <div>
                   <label className={labelCls}>SQL Queries (read-only)</label>
                   <div className="space-y-1.5">
