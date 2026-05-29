@@ -1,26 +1,21 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y \
-    git \
     gcc \
     g++ \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Gradino's pinned dependencies directly (independent of clone)
-RUN curl -sSfL \
-    https://raw.githubusercontent.com/softlab-unimore/Gradino/master/requirements.txt \
-    | grep -v '^\s*#' | grep -v '^\s*$' > /tmp/gradino_req.txt \
-    && pip install --no-cache-dir -r /tmp/gradino_req.txt
+# Install Gradino dependencies (from local submodule)
+COPY gradino/requirements.txt /tmp/gradino_req.txt
+RUN pip install --no-cache-dir -r /tmp/gradino_req.txt
 
-# Install transitive deps missing from Gradino's requirements.txt
+# rdflib is imported by unit_converter.py but missing from requirements.txt
 RUN pip install --no-cache-dir rdflib
 
-# Clone Gradino source from master (read-only — no modifications to this repo)
-RUN git clone --depth 1 --branch master \
-    https://github.com/softlab-unimore/Gradino.git /app/gradino
+# Copy Gradino source
+COPY gradino/ /app/gradino/
 
 # Install backend dependencies
 COPY backend/requirements.txt /app/backend_requirements.txt
