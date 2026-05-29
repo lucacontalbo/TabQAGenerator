@@ -66,6 +66,31 @@
 
 <script type="text/babel">
 /* ============================================================
+   ERROR BOUNDARY
+   ============================================================ */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{padding:'24px',background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'12px',margin:'16px'}}>
+          <p style={{fontWeight:700,color:'#b91c1c',marginBottom:'8px'}}>Render error</p>
+          <pre style={{fontSize:'12px',color:'#7f1d1d',whiteSpace:'pre-wrap',wordBreak:'break-all'}}>
+            {String(this.state.error)}
+          </pre>
+          <button onClick={()=>this.setState({error:null})}
+            style={{marginTop:'12px',padding:'6px 14px',background:'#ef4444',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',fontSize:'13px'}}>
+            Dismiss
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ============================================================
    ICONS
    ============================================================ */
 const Ico = {
@@ -98,58 +123,65 @@ let _cellIdSeq = 0;
 function newCellId() { return `c${++_cellIdSeq}`; }
 
 function parseHTMLToMatrix(htmlStr) {
-  if (!htmlStr || !htmlStr.trim()) return { matrix: [], headerRows: 0, numCols: 0 };
-  const clean = htmlStr.replace(/\sstyle="[^"]*"/gi, '');
-  const parser = new DOMParser();
-  const doc = parser.parseFromString('<html><body>' + clean + '</body></html>', 'text/html');
-  const table = doc.querySelector('table');
-  if (!table) return { matrix: [], headerRows: 0, numCols: 0 };
+  try {
+    if (!htmlStr || !htmlStr.trim()) return { matrix: [], headerRows: 0, numCols: 0 };
+    // Strip style attributes and sanitise
+    const clean = htmlStr.replace(/\sstyle="[^"]*"/gi, '').replace(/\son\w+="[^"]*"/gi, '');
+    const parser = new DOMParser();
+    const doc = parser.parseFromString('<html><body>' + clean + '</body></html>', 'text/html');
+    const table = doc.querySelector('table');
+    if (!table) return { matrix: [], headerRows: 0, numCols: 0 };
 
-  const allTRs = Array.from(table.querySelectorAll('tr'));
-  const numRows = allTRs.length;
-  if (numRows === 0) return { matrix: [], headerRows: 0, numCols: 0 };
+    const allTRs = Array.from(table.querySelectorAll('tr'));
+    const numRows = allTRs.length;
+    if (numRows === 0) return { matrix: [], headerRows: 0, numCols: 0 };
 
-  // Compute max columns
-  let numCols = 0;
-  allTRs.forEach(tr => {
-    let cols = 0;
-    Array.from(tr.querySelectorAll('th,td')).forEach(c => {
-      cols += parseInt(c.getAttribute('colspan') || '1');
+    // Compute max columns
+    let numCols = 0;
+    allTRs.forEach(tr => {
+      let cols = 0;
+      Array.from(tr.querySelectorAll('th,td')).forEach(c => {
+        cols += Math.max(1, parseInt(c.getAttribute('colspan') || '1'));
+      });
+      numCols = Math.max(numCols, cols);
     });
-    numCols = Math.max(numCols, cols);
-  });
+    if (numCols === 0) return { matrix: [], headerRows: 0, numCols: 0 };
 
-  const matrix = Array.from({length: numRows}, () => Array(numCols).fill(null));
+    const matrix = Array.from({length: numRows}, () => Array(numCols).fill(null));
 
-  allTRs.forEach((tr, rIdx) => {
-    let cIdx = 0;
-    Array.from(tr.querySelectorAll('th,td')).forEach(cell => {
-      while (cIdx < numCols && matrix[rIdx][cIdx] !== null) cIdx++;
-      if (cIdx >= numCols) return;
-      const cs = Math.max(1, parseInt(cell.getAttribute('colspan') || '1'));
-      const rs = Math.max(1, parseInt(cell.getAttribute('rowspan') || '1'));
-      const cellObj = {
-        id: newCellId(),
-        content: cell.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim(),
-        isHeader: cell.tagName.toLowerCase() === 'th',
-        colspan: cs,
-        rowspan: rs,
-      };
-      matrix[rIdx][cIdx] = cellObj;
-      for (let dr = 0; dr < rs; dr++) {
-        for (let dc = 0; dc < cs; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const tr2 = rIdx + dr, tc2 = cIdx + dc;
-          if (tr2 < numRows && tc2 < numCols) matrix[tr2][tc2] = { _covered: true };
+    allTRs.forEach((tr, rIdx) => {
+      let cIdx = 0;
+      Array.from(tr.querySelectorAll('th,td')).forEach(cell => {
+        while (cIdx < numCols && matrix[rIdx][cIdx] !== null) cIdx++;
+        if (cIdx >= numCols) return;
+        const cs = Math.max(1, parseInt(cell.getAttribute('colspan') || '1'));
+        const rs = Math.max(1, parseInt(cell.getAttribute('rowspan') || '1'));
+        const cellObj = {
+          id: newCellId(),
+          content: cell.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim(),
+          isHeader: cell.tagName.toLowerCase() === 'th',
+          colspan: cs,
+          rowspan: rs,
+        };
+        matrix[rIdx][cIdx] = cellObj;
+        for (let dr = 0; dr < rs; dr++) {
+          for (let dc = 0; dc < cs; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const tr2 = rIdx + dr, tc2 = cIdx + dc;
+            if (tr2 < numRows && tc2 < numCols) matrix[tr2][tc2] = { _covered: true };
+          }
         }
-      }
-      cIdx += cs;
+        cIdx += cs;
+      });
     });
-  });
 
-  const thead = table.querySelector('thead');
-  const headerRows = thead ? thead.querySelectorAll('tr').length : 0;
-  return { matrix, headerRows, numCols };
+    const thead = table.querySelector('thead');
+    const headerRows = thead ? thead.querySelectorAll('tr').length : 0;
+    return { matrix, headerRows, numCols };
+  } catch(e) {
+    console.error('parseHTMLToMatrix failed:', e, htmlStr);
+    return { matrix: [], headerRows: 0, numCols: 0 };
+  }
 }
 
 function matrixToHTML(matrix, headerRows, numCols) {
@@ -1128,12 +1160,14 @@ function App() {
 
       {/* Instance editor modal */}
       {editingInstance && (
-        <InstanceEditorModal
-          instance={editingInstance}
-          taskId={taskId}
-          onSave={updated => { handleSaveInstance(updated); setEditingInstance(null); }}
-          onClose={() => setEditingInstance(null)}
-        />
+        <ErrorBoundary>
+          <InstanceEditorModal
+            instance={editingInstance}
+            taskId={taskId}
+            onSave={updated => { handleSaveInstance(updated); setEditingInstance(null); }}
+            onClose={() => setEditingInstance(null)}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Notification toast */}
