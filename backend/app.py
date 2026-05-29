@@ -87,6 +87,7 @@ def _flatten_instances(data: dict) -> list:
 # ── Background generation task ───────────────────────────────────────────────
 
 async def _run_generation(task_id: str, params: dict):
+    import sys as _sys
     task = tasks[task_id]
     env = os.environ.copy()
     api_key = params.get("api_key", "")
@@ -102,13 +103,22 @@ async def _run_generation(task_id: str, params: dict):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=env,
+            limit=16 * 1024 * 1024,  # 16 MB stdout buffer
         )
         task["process"] = proc
+
+        # Drain stderr concurrently so it never blocks the subprocess
+        stderr_chunks: list = []
+        async def _read_stderr():
+            async for chunk in proc.stderr:
+                stderr_chunks.append(chunk)
+        stderr_task = asyncio.create_task(_read_stderr())
 
         async for raw_line in proc.stdout:
             if task.get("stop_requested"):
                 proc.terminate()
                 await proc.wait()
+                await stderr_task
                 task["status"] = "stopped"
                 return
 
@@ -133,20 +143,24 @@ async def _run_generation(task_id: str, params: dict):
                     task["status"] = "error"
                     task["error"] = msg.get("message", "Unknown error")
                     task["traceback"] = msg.get("traceback", "")
+                    await stderr_task
                     return
             except json.JSONDecodeError:
-                pass  # Ignore non-JSON output
+                pass
 
         await proc.wait()
+        await stderr_task
+        stderr_output = b"".join(stderr_chunks).decode(errors="replace").strip()
+        if stderr_output:
+            print(f"[generate_script stderr]\n{stderr_output[:4000]}", file=_sys.stderr, flush=True)
 
         if task["status"] == "running":
             if proc.returncode == 0:
                 task["status"] = "completed"
                 task["progress"] = 1.0
             else:
-                stderr_bytes = await proc.stderr.read()
                 task["status"] = "error"
-                task["error"] = stderr_bytes.decode()[-2000:]
+                task["error"] = (stderr_output or "subprocess exited with non-zero code")[-2000:]
 
     except Exception as exc:
         import traceback as _tb
@@ -268,7 +282,10 @@ async def get_task(task_id: str):
 async def get_instances(task_id: str):
     if task_id not in tasks:
         raise HTTPException(404, "Task not found")
-    return {"instances": tasks[task_id].get("instances", [])}
+    return {
+        "instances": tasks[task_id].get("instances", []),
+        "generation_errors": tasks[task_id].get("generation_errors", []),
+    }
 
 
 @app.put("/api/tasks/{task_id}/instances/{instance_id}")

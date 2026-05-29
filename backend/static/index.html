@@ -802,6 +802,7 @@ function App() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [instances, setInstances] = useState([]);
+  const [generationErrors, setGenerationErrors] = useState([]);
   const [editingInstance, setEditingInstance] = useState(null);
   const [notification, setNotification] = useState(null);
 
@@ -818,6 +819,7 @@ function App() {
       return;
     }
     setInstances([]);
+    setGenerationErrors([]);
     setProgress(0); setCurrent(0);
     setErrorMsg('');
     setTaskStatus('running');
@@ -851,8 +853,17 @@ function App() {
           // Fetch instances
           const ir = await fetch(`/api/tasks/${tid}/instances`);
           const id2 = await ir.json();
-          setInstances(id2.instances || []);
-          showNotification(`Generated ${(id2.instances||[]).length} instances successfully!`);
+          const insts = id2.instances || [];
+          const genErrs = id2.generation_errors || [];
+          setInstances(insts);
+          setGenerationErrors(genErrs);
+          if (insts.length > 0) {
+            showNotification(`Generated ${insts.length} instances successfully!`);
+          } else if (genErrs.length > 0) {
+            showNotification('Generation completed with errors — see details below.', 'error');
+          } else {
+            showNotification('Generation completed but produced no instances.', 'info');
+          }
         } else if (msg.status === 'stopped') {
           setTaskStatus('stopped');
           es.close();
@@ -885,6 +896,7 @@ function App() {
     setTaskStatus('idle');
     setTaskId(null);
     setInstances([]);
+    setGenerationErrors([]);
     setProgress(0); setCurrent(0);
     setErrorMsg('');
   }
@@ -1061,6 +1073,31 @@ function App() {
                 }
                 <button onClick={handleReset} className="mt-4 flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-lg transition-colors">
                   <Ico.RefreshCw className="w-4 h-4"/> Start over
+                </button>
+              </div>
+            )}
+
+            {/* Generation errors (0 instances + errors) */}
+            {isDone && instances.length === 0 && generationErrors.length > 0 && (
+              <div className="bg-white rounded-2xl border border-red-200 p-6 fade-up space-y-3">
+                <div className="flex items-start gap-3">
+                  <Ico.AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"/>
+                  <div>
+                    <p className="font-bold text-red-700">Generation completed with errors</p>
+                    <p className="text-sm text-slate-500 mt-0.5">All {generationErrors.length} sample(s) failed. Check your API key and parameters.</p>
+                  </div>
+                </div>
+                <div className="max-h-64 overflow-y-auto scrollbar-thin space-y-1.5">
+                  {generationErrors.slice(0, 20).map((e, i) => (
+                    <pre key={i} className="text-xs bg-slate-900 text-red-300 rounded-lg p-2.5 overflow-x-auto font-mono whitespace-pre-wrap break-all">{e}</pre>
+                  ))}
+                  {generationErrors.length > 20 && (
+                    <p className="text-xs text-slate-400 text-center">…and {generationErrors.length - 20} more errors</p>
+                  )}
+                </div>
+                <button onClick={handleReset}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-lg transition-colors">
+                  <Ico.RefreshCw className="w-4 h-4"/> Try again
                 </button>
               </div>
             )}
