@@ -9,6 +9,7 @@ import io
 import json
 import os
 import re
+import sys
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -87,19 +88,29 @@ def _flatten_instances(data: dict) -> list:
 # ── Background generation task ───────────────────────────────────────────────
 
 async def _run_generation(task_id: str, params: dict):
-    import sys as _sys
     task = tasks[task_id]
     env = os.environ.copy()
     api_key = params.get("api_key", "")
     if api_key:
         env["OPENAI_API_KEY"] = api_key
+    elif not env.get("OPENAI_API_KEY"):
+        # Try loading from gradino/.env as a convenience for local runs
+        here = os.path.dirname(os.path.abspath(__file__))
+        dotenv_path = os.path.join(here, "..", "gradino", ".env")
+        if os.path.isfile(dotenv_path):
+            with open(dotenv_path) as _f:
+                for _line in _f:
+                    _line = _line.strip()
+                    if _line.startswith("OPENAI_API_KEY=") and not _line.startswith("#"):
+                        env["OPENAI_API_KEY"] = _line.split("=", 1)[1].strip().strip('"').strip("'")
+                        break
 
     params_json = json.dumps(params)
     script_path = os.path.join(os.path.dirname(__file__), "generate_script.py")
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "python3", script_path, params_json,
+            sys.executable, script_path, params_json,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=env,
