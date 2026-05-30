@@ -720,6 +720,18 @@ async def get_eval(eval_id: str):
     }
 
 
+@app.get("/api/evaluate/{eval_id}/predictions")
+async def get_eval_predictions(eval_id: str):
+    if eval_id not in eval_tasks:
+        raise HTTPException(404, "Eval task not found")
+    preds_file = os.path.join(EVALS_DIR, eval_id, "predictions.json")
+    if not os.path.isfile(preds_file):
+        raise HTTPException(404, "Predictions not yet available (evaluation may still be running)")
+    with open(preds_file, encoding="utf-8") as f:
+        predictions = json.load(f)
+    return {"eval_id": eval_id, "predictions": predictions}
+
+
 @app.get("/api/leaderboard")
 async def get_leaderboard(task_id: Optional[str] = None):
     result = []

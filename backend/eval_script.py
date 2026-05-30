@@ -184,13 +184,27 @@ def main():
 
         prediction = _extract_final_answer(_remove_markdown(raw)).replace("%", "").strip()
         match, f1 = _score(prediction, label)
+
+        pn = _extract_number(prediction)
+        ln = _extract_number(label)
+        if pn is not None and ln is not None:
+            label_display = f"{round(ln, 6):g}"
+            prediction_display = f"{round(pn, 6):g}"
+        else:
+            label_display = _normalize(label)
+            prediction_display = _normalize(prediction)
+
         predictions.append({
             "id": inst.get("id", i),
             "question": question,
             "label": label,
+            "label_display": label_display,
             "prediction": prediction,
+            "prediction_display": prediction_display,
             "match": bool(match),
             "f1": float(f1),
+            "reasoning": raw,
+            "tables": tables if isinstance(tables, list) else ([str(tables)] if tables else []),
         })
 
         emit({
