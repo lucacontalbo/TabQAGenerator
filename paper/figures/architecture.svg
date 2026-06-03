@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="680" viewBox="0 0 1200 680"
+     font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8"
+            refX="7" refY="4" orient="auto">
+      <path d="M 0 1 L 7 4 L 0 7 Z" fill="#4F46E5"/>
+    </marker>
+  </defs>
+
+  <!-- ─── Background ─────────────────────────────────────────── -->
+  <rect id="background" width="1200" height="680" fill="#FFFFFF"/>
+
+  <!-- ─── Title ─────────────────────────────────────────────── -->
+  <g id="title">
+    <text id="title-main"
+          x="600" y="55"
+          font-size="22" font-weight="700" fill="#0F172A"
+          text-anchor="middle">
+      TabgenQA — Benchmark Generation, Curation, and Evaluation
+    </text>
+    <text id="title-subtitle"
+          x="600" y="80"
+          font-size="13" font-style="italic" fill="#475569"
+          text-anchor="middle">
+      A web platform for non-relational multi-table numerical QA benchmarks
+    </text>
+  </g>
+
+  <!-- ─── Step 1 · Generate ─────────────────────────────────── -->
+  <g id="step-generate">
+
+    <rect id="generate-body"
+          x="40" y="105" width="340" height="375" rx="10"
+          fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5"/>
+
+    <!-- header: rounded top corners, flat bottom -->
+    <path id="generate-header"
+          d="M 50,105 Q 40,105 40,115 L 40,163 L 380,163 L 380,115 Q 380,105 370,105 Z"
+          fill="#1E40AF"/>
+
+    <g id="generate-badge">
+      <circle cx="78" cy="134" r="20" fill="#FFFFFF" fill-opacity="0.25"/>
+      <text x="78" y="134"
+            font-size="16" font-weight="700" fill="#FFFFFF"
+            text-anchor="middle" dominant-baseline="central">①</text>
+    </g>
+
+    <text id="generate-step-title"
+          x="106" y="134"
+          font-size="15" font-weight="700" fill="#FFFFFF"
+          dominant-baseline="central">Generate</text>
+
+    <text id="generate-subtitle"
+          x="58" y="186"
+          font-size="11" font-weight="600" fill="#1E40AF">Configure benchmark parameters:</text>
+
+    <g id="generate-bullets">
+      <text x="65" y="212" font-size="10.5" fill="#1E40AF">▸</text>
+      <text id="gen-bullet-domain"   x="82" y="212" font-size="10.5" fill="#0F172A">Domain (envir. · fin. · health · prod.)</text>
+      <text x="65" y="239" font-size="10.5" fill="#1E40AF">▸</text>
+      <text id="gen-bullet-qtype"    x="82" y="239" font-size="10.5" fill="#0F172A">Question type (sum · avg · superlative)</text>
+      <text x="65" y="266" font-size="10.5" fill="#1E40AF">▸</text>
+      <text id="gen-bullet-tables"   x="82" y="266" font-size="10.5" fill="#0F172A">Num. tables (2–20) · samples · columns</text>
+    </g>
+
+    <g id="generate-footer-box">
+      <rect x="56" y="375" width="308" height="82" rx="7"
+            fill="#DBEAFE" stroke="#60A5FA" stroke-width="1.2"/>
+      <text id="generate-footer-title"
+            x="210" y="401"
+            font-size="11" font-weight="700" fill="#1E3A8A"
+            text-anchor="middle">Gradino  [black box]</text>
+      <text id="generate-footer-sub"
+            x="210" y="422"
+            font-size="10" font-style="italic" fill="#1E40AF"
+            text-anchor="middle">multi-table QA generator</text>
+    </g>
+
+  </g>
+
+  <!-- ─── Step 2 · Review &amp; Edit ────────────────────────── -->
+  <g id="step-review">
+
+    <rect id="review-body"
+          x="430" y="105" width="340" height="375" rx="10"
+          fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.5"/>
+
+    <path id="review-header"
+          d="M 440,105 Q 430,105 430,115 L 430,163 L 770,163 L 770,115 Q 770,105 760,105 Z"
+          fill="#5B21B6"/>
+
+    <g id="review-badge">
+      <circle cx="468" cy="134" r="20" fill="#FFFFFF" fill-opacity="0.25"/>
+      <text x="468" y="134"
+            font-size="16" font-weight="700" fill="#FFFFFF"
+            text-anchor="middle" dominant-baseline="central">②</text>
+    </g>
+
+    <text id="review-step-title"
+          x="496" y="134"
+          font-size="15" font-weight="700" fill="#FFFFFF"
+          dominant-baseline="central">Review &amp; Edit</text>
+
+    <text id="review-subtitle"
+          x="448" y="186"
+          font-size="11" font-weight="600" fill="#5B21B6">Inspect and refine instances:</text>
+
+    <g id="review-bullets">
+      <text x="455" y="212" font-size="10.5" fill="#5B21B6">▸</text>
+      <text id="rev-bullet-edit"     x="472" y="212" font-size="10.5" fill="#0F172A">Edit question text and gold answer</text>
+      <text x="455" y="239" font-size="10.5" fill="#5B21B6">▸</text>
+      <text id="rev-bullet-table"    x="472" y="239" font-size="10.5" fill="#0F172A">Table editor (add/remove rows &amp; cols)</text>
+      <text x="455" y="266" font-size="10.5" fill="#5B21B6">▸</text>
+      <text id="rev-bullet-export"   x="472" y="266" font-size="10.5" fill="#0F172A">History · filters · CSV / JSON export</text>
+    </g>
+
+    <g id="review-footer-box">
+      <rect x="446" y="375" width="308" height="82" rx="7"
+            fill="#EDE9FE" stroke="#A78BFA" stroke-width="1.2"/>
+      <text id="review-footer-title"
+            x="600" y="401"
+            font-size="11" font-weight="700" fill="#3B0764"
+            text-anchor="middle">Curated benchmark</text>
+      <text id="review-footer-sub"
+            x="600" y="422"
+            font-size="10" font-style="italic" fill="#5B21B6"
+            text-anchor="middle">user-verified instances</text>
+    </g>
+
+  </g>
+
+  <!-- ─── Step 3 · Evaluate &amp; Compare ──────────────────── -->
+  <g id="step-evaluate">
+
+    <rect id="evaluate-body"
+          x="820" y="105" width="340" height="375" rx="10"
+          fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5"/>
+
+    <path id="evaluate-header"
+          d="M 830,105 Q 820,105 820,115 L 820,163 L 1160,163 L 1160,115 Q 1160,105 1150,105 Z"
+          fill="#065F46"/>
+
+    <g id="evaluate-badge">
+      <circle cx="858" cy="134" r="20" fill="#FFFFFF" fill-opacity="0.25"/>
+      <text x="858" y="134"
+            font-size="16" font-weight="700" fill="#FFFFFF"
+            text-anchor="middle" dominant-baseline="central">③</text>
+    </g>
+
+    <text id="evaluate-step-title"
+          x="886" y="134"
+          font-size="15" font-weight="700" fill="#FFFFFF"
+          dominant-baseline="central">Evaluate &amp; Compare</text>
+
+    <text id="evaluate-subtitle"
+          x="838" y="186"
+          font-size="11" font-weight="600" fill="#065F46">Run automated LLM evaluation:</text>
+
+    <g id="evaluate-bullets">
+      <text x="845" y="212" font-size="10.5" fill="#065F46">▸</text>
+      <text id="eval-bullet-apis"    x="862" y="212" font-size="10.5" fill="#0F172A">OpenAI · Anthropic Claude · Gemini</text>
+      <text x="845" y="239" font-size="10.5" fill="#065F46">▸</text>
+      <text id="eval-bullet-vllm"    x="862" y="239" font-size="10.5" fill="#0F172A">Open-weight models via local vLLM</text>
+      <text x="845" y="266" font-size="10.5" fill="#065F46">▸</text>
+      <text id="eval-bullet-metrics" x="862" y="266" font-size="10.5" fill="#0F172A">Accuracy + F1 · chain-of-thought</text>
+    </g>
+
+    <g id="evaluate-footer-box">
+      <rect x="836" y="375" width="308" height="82" rx="7"
+            fill="#D1FAE5" stroke="#34D399" stroke-width="1.2"/>
+      <text id="evaluate-footer-title"
+            x="990" y="401"
+            font-size="11" font-weight="700" fill="#022C22"
+            text-anchor="middle">Leaderboard · Accuracy · F1</text>
+      <text id="evaluate-footer-sub"
+            x="990" y="422"
+            font-size="10" font-style="italic" fill="#065F46"
+            text-anchor="middle">ranked models · per-instance view</text>
+    </g>
+
+  </g>
+
+  <!-- ─── Arrows ────────────────────────────────────────────── -->
+  <g id="arrows">
+
+    <g id="arrow-generate-to-review">
+      <line x1="384" y1="416" x2="422" y2="416"
+            stroke="#4F46E5" stroke-width="2" stroke-linecap="round"
+            marker-end="url(#arrowhead)"/>
+      <text id="arrow-label-qa-instances"
+            x="403" y="407"
+            font-size="9.5" font-style="italic" fill="#4F46E5"
+            text-anchor="middle">QA instances</text>
+    </g>
+
+    <g id="arrow-review-to-evaluate">
+      <line x1="774" y1="416" x2="812" y2="416"
+            stroke="#4F46E5" stroke-width="2" stroke-linecap="round"
+            marker-end="url(#arrowhead)"/>
+      <text id="arrow-label-curated-set"
+            x="793" y="407"
+            font-size="9.5" font-style="italic" fill="#4F46E5"
+            text-anchor="middle">curated set</text>
+    </g>
+
+  </g>
+
+  <!-- ─── Separator ─────────────────────────────────────────── -->
+  <g id="usage-scenarios-separator">
+    <line id="separator-line"
+          x1="40" y1="510" x2="1160" y2="510"
+          stroke="#CBD5E1" stroke-width="1.2"/>
+    <text id="separator-label"
+          x="600" y="505"
+          font-size="10.5" font-weight="700" font-style="italic"
+          fill="#94A3B8" text-anchor="middle">Usage Scenarios</text>
+  </g>
+
+  <!-- ─── Scenario Cards ────────────────────────────────────── -->
+  <g id="scenario-cards">
+
+    <g id="scenario-procurement">
+      <rect id="procurement-bg"
+            x="40" y="525" width="340" height="130" rx="8"
+            fill="#F8FAFF" stroke="#0284C7" stroke-width="1.5" stroke-opacity="0.3"/>
+      <rect id="procurement-accent"
+            x="40" y="525" width="7" height="130" rx="3.5"
+            fill="#0284C7"/>
+      <text id="procurement-title"
+            x="57" y="551"
+            font-size="12" font-weight="700" fill="#0284C7">Procurement</text>
+      <text id="procurement-line-1" x="57" y="572" font-size="10.5" fill="#475569">A user generates a Finance/Products</text>
+      <text id="procurement-line-2" x="57" y="590" font-size="10.5" fill="#475569">domain benchmark to identify which</text>
+      <text id="procurement-line-3" x="57" y="608" font-size="10.5" fill="#475569">LLM best handles procurement queries.</text>
+    </g>
+
+    <g id="scenario-diagnosis">
+      <rect id="diagnosis-bg"
+            x="430" y="525" width="340" height="130" rx="8"
+            fill="#F8FAFF" stroke="#BE185D" stroke-width="1.5" stroke-opacity="0.3"/>
+      <rect id="diagnosis-accent"
+            x="430" y="525" width="7" height="130" rx="3.5"
+            fill="#BE185D"/>
+      <text id="diagnosis-title"
+            x="447" y="551"
+            font-size="12" font-weight="700" fill="#BE185D">Diagnosis</text>
+      <text id="diagnosis-line-1" x="447" y="572" font-size="10.5" fill="#475569">A clinician evaluates LLMs on</text>
+      <text id="diagnosis-line-2" x="447" y="590" font-size="10.5" fill="#475569">Healthcare tables to assess readiness</text>
+      <text id="diagnosis-line-3" x="447" y="608" font-size="10.5" fill="#475569">for clinical decision support.</text>
+    </g>
+
+    <g id="scenario-curation">
+      <rect id="curation-bg"
+            x="820" y="525" width="340" height="130" rx="8"
+            fill="#F8FAFF" stroke="#B45309" stroke-width="1.5" stroke-opacity="0.3"/>
+      <rect id="curation-accent"
+            x="820" y="525" width="7" height="130" rx="3.5"
+            fill="#B45309"/>
+      <text id="curation-title"
+            x="837" y="551"
+            font-size="12" font-weight="700" fill="#B45309">Curation</text>
+      <text id="curation-line-1" x="837" y="572" font-size="10.5" fill="#475569">A researcher reviews automatically</text>
+      <text id="curation-line-2" x="837" y="590" font-size="10.5" fill="#475569">generated instances and edits them</text>
+      <text id="curation-line-3" x="837" y="608" font-size="10.5" fill="#475569">to build a validated dataset.</text>
+    </g>
+
+  </g>
+
+</svg>
