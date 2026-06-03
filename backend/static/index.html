@@ -1259,6 +1259,41 @@ function HistoryPage({ onNavigate, defaultApiKey }) {
   const [filterQtype, setFilterQtype] = us('');
   const [filterStatus, setFilterStatus] = us('');
   const [evaluatingTask, setEvaluatingTask] = us(null);
+  const [expandedTaskId, setExpandedTaskId] = us(null);
+  const [taskInstancesCache, setTaskInstancesCache] = us({});
+  const [instancesLoading, setInstancesLoading] = us({});
+  const [editingInstance, setEditingInstance] = us(null);
+  const [editingTaskId, setEditingTaskId] = us(null);
+
+  async function loadTaskInstances(taskId) {
+    if (taskInstancesCache[taskId] !== undefined) return;
+    setInstancesLoading(prev => ({ ...prev, [taskId]: true }));
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/instances`);
+      const data = await res.json();
+      setTaskInstancesCache(prev => ({ ...prev, [taskId]: data.instances || [] }));
+    } catch(e) {
+      setTaskInstancesCache(prev => ({ ...prev, [taskId]: [] }));
+    } finally {
+      setInstancesLoading(prev => ({ ...prev, [taskId]: false }));
+    }
+  }
+
+  function toggleExpand(taskId) {
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+    } else {
+      setExpandedTaskId(taskId);
+      loadTaskInstances(taskId);
+    }
+  }
+
+  function handleSaveHistoryInstance(taskId, updated) {
+    setTaskInstancesCache(prev => ({
+      ...prev,
+      [taskId]: (prev[taskId] || []).map(i => i.id === updated.id ? updated : i),
+    }));
+  }
 
   async function loadHistory() {
     setLoading(true);
@@ -1357,47 +1392,80 @@ function HistoryPage({ onNavigate, defaultApiKey }) {
         <div className="space-y-3">
           {tasks.map(task => {
             const p = task.params || {};
+            const isExpanded = expandedTaskId === task.task_id;
+            const cachedInsts = taskInstancesCache[task.task_id];
+            const isLoadingInsts = instancesLoading[task.task_id];
             return (
-              <div key={task.task_id} className="bg-white rounded-xl border border-slate-200 hover:border-indigo-200 hover:shadow-sm transition-all p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className={`badge ${statusBadge(task.status)}`}>{task.status}</span>
-                      <span className="text-xs text-slate-500">{fmtDate(task.created_at)}</span>
-                      <span className="text-xs font-mono text-slate-400">{task.task_id.slice(0,8)}…</span>
+              <div key={task.task_id} className="space-y-1.5">
+                <div className="bg-white rounded-xl border border-slate-200 hover:border-indigo-200 hover:shadow-sm transition-all p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <span className={`badge ${statusBadge(task.status)}`}>{task.status}</span>
+                        <span className="text-xs text-slate-500">{fmtDate(task.created_at)}</span>
+                        <span className="text-xs font-mono text-slate-400">{task.task_id.slice(0,8)}…</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.domain && <span className="badge bg-indigo-50 text-indigo-700">{p.domain}</span>}
+                        {p.question_type && <span className="badge bg-purple-50 text-purple-700">{p.question_type}</span>}
+                        {p.num_tables !== undefined && <span className="badge bg-slate-100 text-slate-600">{p.num_tables === -1 ? 'ablation' : `${p.num_tables} tables`}</span>}
+                        {p.num_samples !== undefined && <span className="badge bg-slate-100 text-slate-600">{p.num_samples} samples</span>}
+                      </div>
+                      {task.status === 'completed' && (
+                        <p className="text-sm font-semibold text-slate-700 mt-2">{task.instance_count} instance(s) generated</p>
+                      )}
+                      {task.status === 'error' && task.error && (
+                        <p className="text-xs text-red-500 mt-1 truncate">{task.error}</p>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {p.domain && <span className="badge bg-indigo-50 text-indigo-700">{p.domain}</span>}
-                      {p.question_type && <span className="badge bg-purple-50 text-purple-700">{p.question_type}</span>}
-                      {p.num_tables !== undefined && <span className="badge bg-slate-100 text-slate-600">{p.num_tables === -1 ? 'ablation' : `${p.num_tables} tables`}</span>}
-                      {p.num_samples !== undefined && <span className="badge bg-slate-100 text-slate-600">{p.num_samples} samples</span>}
+                    <div className="flex flex-col gap-1.5 flex-shrink-0">
+                      {task.status === 'completed' && task.instance_count > 0 && (
+                        <>
+                          <button onClick={() => toggleExpand(task.task_id)}
+                            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${isExpanded ? 'bg-indigo-600 text-white' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'}`}>
+                            <Ico.Pencil className="w-3 h-3"/> {isExpanded ? 'Hide' : 'Edit'}
+                          </button>
+                          <a href={`/api/tasks/${task.task_id}/download?fmt=csv`} download
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition-colors">
+                            <Ico.Download className="w-3 h-3"/> CSV
+                          </a>
+                          <a href={`/api/tasks/${task.task_id}/download?fmt=json`} download
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                            <Ico.Download className="w-3 h-3"/> JSON
+                          </a>
+                          <button onClick={() => setEvaluatingTask(task)}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-violet-100 hover:bg-violet-200 text-violet-700 transition-colors">
+                            <Ico.Flask className="w-3 h-3"/> Evaluate
+                          </button>
+                        </>
+                      )}
                     </div>
-                    {task.status === 'completed' && (
-                      <p className="text-sm font-semibold text-slate-700 mt-2">{task.instance_count} instance(s) generated</p>
-                    )}
-                    {task.status === 'error' && task.error && (
-                      <p className="text-xs text-red-500 mt-1 truncate">{task.error}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5 flex-shrink-0">
-                    {task.status === 'completed' && task.instance_count > 0 && (
-                      <>
-                        <a href={`/api/tasks/${task.task_id}/download?fmt=csv`} download
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition-colors">
-                          <Ico.Download className="w-3 h-3"/> CSV
-                        </a>
-                        <a href={`/api/tasks/${task.task_id}/download?fmt=json`} download
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
-                          <Ico.Download className="w-3 h-3"/> JSON
-                        </a>
-                        <button onClick={() => setEvaluatingTask(task)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-violet-100 hover:bg-violet-200 text-violet-700 transition-colors">
-                          <Ico.Flask className="w-3 h-3"/> Evaluate
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
+                {isExpanded && (
+                  <div className="px-4 py-4 bg-indigo-50/60 rounded-xl border border-indigo-200 fade-up">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                        <Ico.Pencil className="w-3.5 h-3.5 text-indigo-500"/>
+                        Edit Instances
+                      </h3>
+                      <span className="text-xs text-slate-400">{task.instance_count} total</span>
+                    </div>
+                    {isLoadingInsts ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Ico.Loader className="w-5 h-5 text-indigo-400 spin"/>
+                      </div>
+                    ) : (cachedInsts || []).length === 0 ? (
+                      <p className="text-sm text-slate-400 text-center py-6">No instances available.</p>
+                    ) : (
+                      <InstanceList
+                        instances={cachedInsts || []}
+                        taskId={task.task_id}
+                        onEdit={(inst) => { setEditingInstance(inst); setEditingTaskId(task.task_id); }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1413,6 +1481,16 @@ function HistoryPage({ onNavigate, defaultApiKey }) {
           onDone={() => { setEvaluatingTask(null); }}
         />
       )}
+      {editingInstance && editingTaskId && (
+        <ErrorBoundary>
+          <InstanceEditorModal
+            instance={editingInstance}
+            taskId={editingTaskId}
+            onSave={updated => { handleSaveHistoryInstance(editingTaskId, updated); setEditingInstance(null); setEditingTaskId(null); }}
+            onClose={() => { setEditingInstance(null); setEditingTaskId(null); }}
+          />
+        </ErrorBoundary>
+      )}
     </div>
   );
 }
@@ -1424,14 +1502,15 @@ function LeaderboardPage() {
   const { useState: us, useEffect: ue } = React;
   const [rows, setRows] = us([]);
   const [loading, setLoading] = us(true);
-  const [taskFilter, setTaskFilter] = us('');
+  const [filterDomain, setFilterDomain] = us('');
+  const [filterQtype, setFilterQtype] = us('');
+  const [filterModel, setFilterModel] = us('');
   const [selectedEval, setSelectedEval] = us(null);
 
   async function loadLeaderboard() {
     setLoading(true);
     try {
-      const params = taskFilter ? `?task_id=${taskFilter}` : '';
-      const res = await fetch(`/api/leaderboard${params}`);
+      const res = await fetch('/api/leaderboard');
       const data = await res.json();
       setRows(data.leaderboard || []);
     } catch(e) {
@@ -1449,10 +1528,15 @@ function LeaderboardPage() {
   }
 
   const typeColors = TYPE_COLORS;
+  const selCls = "border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white";
 
-  const displayed = taskFilter
-    ? rows.filter(r => r.task_id && r.task_id.startsWith(taskFilter))
-    : rows;
+  const displayed = rows.filter(r => {
+    const tp = r.task_params || {};
+    if (filterDomain && tp.domain !== filterDomain) return false;
+    if (filterQtype && tp.question_type !== filterQtype) return false;
+    if (filterModel && r.model_type !== filterModel) return false;
+    return true;
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -1466,13 +1550,31 @@ function LeaderboardPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-5 flex items-center gap-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-5 flex flex-wrap gap-3 items-center">
         <Ico.Filter className="w-4 h-4 text-slate-400"/>
-        <input value={taskFilter} onChange={e=>setTaskFilter(e.target.value)}
-          placeholder="Filter by Task ID prefix…"
-          className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-64"/>
-        {taskFilter && (
-          <button onClick={()=>setTaskFilter('')} className="text-xs text-slate-400 hover:text-slate-600 underline">Clear</button>
+        <select value={filterDomain} onChange={e=>setFilterDomain(e.target.value)} className={selCls}>
+          <option value="">All Domains</option>
+          <option value="environmental">Environmental</option>
+          <option value="finance">Finance</option>
+          <option value="healthcare">Healthcare</option>
+          <option value="products">Products</option>
+        </select>
+        <select value={filterQtype} onChange={e=>setFilterQtype(e.target.value)} className={selCls}>
+          <option value="">All Question Types</option>
+          <option value="sum">Sum</option>
+          <option value="average">Average</option>
+          <option value="superlative">Superlative</option>
+        </select>
+        <select value={filterModel} onChange={e=>setFilterModel(e.target.value)} className={selCls}>
+          <option value="">All Model Types</option>
+          <option value="openai">OpenAI</option>
+          <option value="claude">Claude</option>
+          <option value="gemini">Gemini</option>
+          <option value="huggingface">HuggingFace</option>
+        </select>
+        {(filterDomain || filterQtype || filterModel) && (
+          <button onClick={() => { setFilterDomain(''); setFilterQtype(''); setFilterModel(''); }}
+            className="text-xs text-slate-400 hover:text-slate-600 underline">Clear filters</button>
         )}
       </div>
 
