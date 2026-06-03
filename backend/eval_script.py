@@ -87,16 +87,20 @@ def _call_openai_compat(client, model_name: str, prompt: str) -> str:
         temperature=0.5,
         max_tokens=2048,
     )
-    try:
-        resp = client.chat.completions.create(**kwargs)
-    except Exception as exc:
-        # Newer OpenAI models (o-series, gpt-5-x) require max_completion_tokens
-        if "max_tokens" in str(exc) and "not supported" in str(exc):
-            kwargs.pop("max_tokens")
-            kwargs["max_completion_tokens"] = 2048
+    for _ in range(3):
+        try:
             resp = client.chat.completions.create(**kwargs)
-        else:
-            raise
+            return resp.choices[0].message.content
+        except Exception as exc:
+            msg = str(exc)
+            if "max_tokens" in msg and "not supported" in msg:
+                kwargs.pop("max_tokens", None)
+                kwargs["max_completion_tokens"] = 2048
+            elif "temperature" in msg and "not supported" in msg:
+                kwargs.pop("temperature", None)
+            else:
+                raise
+    resp = client.chat.completions.create(**kwargs)
     return resp.choices[0].message.content
 
 
