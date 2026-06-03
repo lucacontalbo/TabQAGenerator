@@ -81,12 +81,22 @@ def _score(prediction: str, label: str):
 
 
 def _call_openai_compat(client, model_name: str, prompt: str) -> str:
-    resp = client.chat.completions.create(
+    kwargs = dict(
         model=model_name,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
         max_tokens=2048,
     )
+    try:
+        resp = client.chat.completions.create(**kwargs)
+    except Exception as exc:
+        # Newer OpenAI models (o-series, gpt-5-x) require max_completion_tokens
+        if "max_tokens" in str(exc) and "not supported" in str(exc):
+            kwargs.pop("max_tokens")
+            kwargs["max_completion_tokens"] = 2048
+            resp = client.chat.completions.create(**kwargs)
+        else:
+            raise
     return resp.choices[0].message.content
 
 
