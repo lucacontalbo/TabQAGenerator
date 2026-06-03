@@ -1180,31 +1180,28 @@ function EvalDetailModal({ evalId, evalInfo, onClose }) {
                 </div>
 
                 {/* Expand buttons */}
-                {(hasTables || hasReasoning) && (
-                  <div className="flex flex-wrap gap-2 ml-10">
-                    {hasTables && (
-                      <button onClick={() => toggle(pred.id, 'tables')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${exp.tables ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                        <Ico.Table className="w-3.5 h-3.5"/>
-                        {exp.tables ? 'Hide' : 'Show'} Tables ({pred.tables.length})
-                        <Ico.ChevronDown className="w-3 h-3 chevron-anim" style={{transform: exp.tables ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
-                      </button>
-                    )}
-                    {hasReasoning && (
-                      <button onClick={() => toggle(pred.id, 'reasoning')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${exp.reasoning ? 'bg-violet-100 text-violet-700 border-violet-300' : 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100'}`}>
-                        <Ico.Brain className="w-3.5 h-3.5"/>
-                        {exp.reasoning ? 'Hide' : 'Show'} Chain-of-Thought
-                        <Ico.ChevronDown className="w-3 h-3 chevron-anim" style={{transform: exp.reasoning ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
-                      </button>
-                    )}
-                    {!hasReasoning && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-slate-400 bg-slate-50 border border-slate-200">
-                        <Ico.Brain className="w-3.5 h-3.5"/> No reasoning recorded
-                      </span>
-                    )}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 ml-10">
+                  {hasTables && (
+                    <button onClick={() => toggle(pred.id, 'tables')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${exp.tables ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                      <Ico.Table className="w-3.5 h-3.5"/>
+                      {exp.tables ? 'Hide' : 'Show'} Tables ({pred.tables.length})
+                      <Ico.ChevronDown className="w-3 h-3 chevron-anim" style={{transform: exp.tables ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
+                    </button>
+                  )}
+                  {hasReasoning ? (
+                    <button onClick={() => toggle(pred.id, 'reasoning')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${exp.reasoning ? 'bg-violet-100 text-violet-700 border-violet-300' : 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100'}`}>
+                      <Ico.Brain className="w-3.5 h-3.5"/>
+                      {exp.reasoning ? 'Hide' : 'Show'} Chain-of-Thought
+                      <Ico.ChevronDown className="w-3 h-3 chevron-anim" style={{transform: exp.reasoning ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-amber-600 bg-amber-50 border border-amber-200" title="Re-run this evaluation to capture tables and chain-of-thought reasoning">
+                      <Ico.Brain className="w-3.5 h-3.5"/> No reasoning — re-run evaluation to capture CoT
+                    </span>
+                  )}
+                </div>
 
                 {/* Tables */}
                 {exp.tables && hasTables && (
