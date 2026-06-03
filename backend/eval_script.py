@@ -87,21 +87,20 @@ def _call_openai_compat(client, model_name: str, prompt: str) -> str:
         temperature=0.5,
         max_tokens=2048,
     )
-    for _ in range(3):
+    for _ in range(4):
         try:
             resp = client.chat.completions.create(**kwargs)
             return resp.choices[0].message.content
         except Exception as exc:
-            msg = str(exc)
-            if "max_tokens" in msg and "not supported" in msg:
+            msg = str(exc).lower()
+            if "max_tokens" in msg and ("unsupported" in msg or "not supported" in msg):
                 kwargs.pop("max_tokens", None)
                 kwargs["max_completion_tokens"] = 2048
-            elif "temperature" in msg and "not supported" in msg:
-                kwargs.pop("temperature", None)
+            elif "temperature" in msg and ("unsupported" in msg or "not supported" in msg):
+                kwargs["temperature"] = 1
             else:
                 raise
-    resp = client.chat.completions.create(**kwargs)
-    return resp.choices[0].message.content
+    raise RuntimeError("Failed to call API after parameter adjustments")
 
 
 def _call_claude(client, model_name: str, prompt: str) -> str:
