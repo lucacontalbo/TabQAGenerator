@@ -1192,11 +1192,16 @@ function EvalDetailModal({ evalId, evalInfo, onClose }) {
                     )}
                     {hasReasoning && (
                       <button onClick={() => toggle(pred.id, 'reasoning')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${exp.reasoning ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${exp.reasoning ? 'bg-violet-100 text-violet-700 border-violet-300' : 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100'}`}>
                         <Ico.Brain className="w-3.5 h-3.5"/>
-                        {exp.reasoning ? 'Hide' : 'Show'} Reasoning
+                        {exp.reasoning ? 'Hide' : 'Show'} Chain-of-Thought
                         <Ico.ChevronDown className="w-3 h-3 chevron-anim" style={{transform: exp.reasoning ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
                       </button>
+                    )}
+                    {!hasReasoning && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-slate-400 bg-slate-50 border border-slate-200">
+                        <Ico.Brain className="w-3.5 h-3.5"/> No reasoning recorded
+                      </span>
                     )}
                   </div>
                 )}
@@ -1213,10 +1218,11 @@ function EvalDetailModal({ evalId, evalInfo, onClose }) {
                   </div>
                 )}
 
-                {/* Reasoning */}
+                {/* Chain-of-Thought Reasoning */}
                 {exp.reasoning && hasReasoning && (
                   <div className="ml-10">
-                    <pre className="text-xs bg-slate-900 text-slate-200 rounded-lg p-4 overflow-x-auto overflow-y-auto scrollbar-thin font-mono whitespace-pre-wrap break-words max-h-72">
+                    <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wide mb-1.5">Full chain-of-thought response</p>
+                    <pre className="text-xs bg-slate-900 text-slate-200 rounded-lg p-4 overflow-x-auto overflow-y-auto scrollbar-thin font-mono whitespace-pre-wrap break-words max-h-80">
                       {pred.reasoning}
                     </pre>
                   </div>
@@ -1403,7 +1409,10 @@ function HistoryPage({ onNavigate, defaultApiKey }) {
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <span className={`badge ${statusBadge(task.status)}`}>{task.status}</span>
                         <span className="text-xs text-slate-500">{fmtDate(task.created_at)}</span>
-                        <span className="text-xs font-mono text-slate-400">{task.task_id.slice(0,8)}…</span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200" title={task.task_id}>
+                          <span className="font-sans text-slate-400 font-semibold not-italic">ID</span>
+                          {task.task_id.slice(0,8)}
+                        </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {p.domain && <span className="badge bg-indigo-50 text-indigo-700">{p.domain}</span>}
@@ -1505,6 +1514,7 @@ function LeaderboardPage() {
   const [filterDomain, setFilterDomain] = us('');
   const [filterQtype, setFilterQtype] = us('');
   const [filterModel, setFilterModel] = us('');
+  const [filterTaskId, setFilterTaskId] = us('');
   const [selectedEval, setSelectedEval] = us(null);
 
   async function loadLeaderboard() {
@@ -1530,11 +1540,14 @@ function LeaderboardPage() {
   const typeColors = TYPE_COLORS;
   const selCls = "border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white";
 
+  const uniqueTaskIds = [...new Set(rows.map(r => r.task_id).filter(Boolean))];
+
   const displayed = rows.filter(r => {
     const tp = r.task_params || {};
     if (filterDomain && tp.domain !== filterDomain) return false;
     if (filterQtype && tp.question_type !== filterQtype) return false;
     if (filterModel && r.model_type !== filterModel) return false;
+    if (filterTaskId && r.task_id !== filterTaskId) return false;
     return true;
   });
 
@@ -1572,8 +1585,14 @@ function LeaderboardPage() {
           <option value="gemini">Gemini</option>
           <option value="huggingface">HuggingFace</option>
         </select>
-        {(filterDomain || filterQtype || filterModel) && (
-          <button onClick={() => { setFilterDomain(''); setFilterQtype(''); setFilterModel(''); }}
+        <select value={filterTaskId} onChange={e=>setFilterTaskId(e.target.value)} className={selCls}>
+          <option value="">All Datasets</option>
+          {uniqueTaskIds.map(tid => (
+            <option key={tid} value={tid}>Dataset {tid.slice(0,8)}</option>
+          ))}
+        </select>
+        {(filterDomain || filterQtype || filterModel || filterTaskId) && (
+          <button onClick={() => { setFilterDomain(''); setFilterQtype(''); setFilterModel(''); setFilterTaskId(''); }}
             className="text-xs text-slate-400 hover:text-slate-600 underline">Clear filters</button>
         )}
       </div>
@@ -1624,11 +1643,16 @@ function LeaderboardPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {tp.domain && <span className="badge bg-indigo-50 text-indigo-700">{tp.domain}</span>}
-                        {tp.question_type && <span className="badge bg-purple-50 text-purple-700">{tp.question_type}</span>}
-                        {tp.num_tables !== undefined && <span className="badge bg-slate-100 text-slate-600">{tp.num_tables === -1 ? 'ablation' : `${tp.num_tables}t`}</span>}
-                        {!tp.domain && <span className="text-xs text-slate-400 font-mono">{(row.task_id||'').slice(0,8)}…</span>}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap gap-1">
+                          {tp.domain && <span className="badge bg-indigo-50 text-indigo-700">{tp.domain}</span>}
+                          {tp.question_type && <span className="badge bg-purple-50 text-purple-700">{tp.question_type}</span>}
+                          {tp.num_tables !== undefined && <span className="badge bg-slate-100 text-slate-600">{tp.num_tables === -1 ? 'ablation' : `${tp.num_tables}t`}</span>}
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 w-fit" title={row.task_id}>
+                          <span className="font-sans text-slate-400 font-semibold not-italic">ID</span>
+                          {(row.task_id||'').slice(0,8)}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
