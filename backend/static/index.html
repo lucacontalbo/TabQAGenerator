@@ -1118,8 +1118,76 @@ function EvaluateModal({ taskId, instanceCount, defaultApiKey, onClose, onDone }
    SHARED CONSTANTS
    ============================================================ */
 const PERTURBATION_OPTIONS = [
-  { value: 'unit_converted',     label: 'Unit Converted',     desc: 'Tables where measurement units are converted' },
-  { value: 'not_unit_converted', label: 'Not Unit Converted', desc: 'Tables with original measurement units' },
+  // ── Top-level perturbation axis ──────────────────────────────────
+  {
+    value: 'unit_converted',
+    label: 'Unit Converted',
+    desc: 'Measurement units are converted across tables (e.g. km → miles)',
+    group: 'Unit Conversion',
+  },
+  {
+    value: 'not_unit_converted',
+    label: 'Not Unit Converted',
+    desc: 'Measurement units kept in their original form',
+    group: 'Unit Conversion',
+  },
+  // ── Table structure perturbations ────────────────────────────────
+  {
+    value: 'multiheader',
+    label: 'Multi-header Pivot',
+    desc: 'Table pivoted into a cross-tab / multi-header format',
+    group: 'Structure',
+  },
+  {
+    value: 'column_merging',
+    label: 'Column Merging',
+    desc: 'Two random columns merged into a single "Col1 (Col2)" column',
+    group: 'Structure',
+  },
+  {
+    value: 'blank_rows',
+    label: 'Blank Row Insertion',
+    desc: 'Empty rows inserted at random positions in the table',
+    group: 'Structure',
+  },
+  {
+    value: 'blank_columns',
+    label: 'Blank Column Insertion',
+    desc: 'Empty columns inserted at random positions in the table',
+    group: 'Structure',
+  },
+  // ── Cell-level perturbations ─────────────────────────────────────
+  {
+    value: 'null_values',
+    label: 'Null Value Insertion',
+    desc: 'N/A or blank strings inserted into non-answer cells (50 % probability)',
+    group: 'Cell',
+  },
+  {
+    value: 'typos',
+    label: 'Typo Insertion',
+    desc: 'Character swaps and zero-width Unicode noise injected into cell text',
+    group: 'Cell',
+  },
+  {
+    value: 'cell_context_phrases',
+    label: 'Cell Context Phrases',
+    desc: 'Footnotes, parenthetical notes, or contextual phrases added inside cells',
+    group: 'Cell',
+  },
+  // ── Intra-table ambiguity perturbations ──────────────────────────
+  {
+    value: 'entity_missing',
+    label: 'Entity Removal',
+    desc: 'Entities required to answer the question removed from the table',
+    group: 'Ambiguity',
+  },
+  {
+    value: 'intra_table_contradiction',
+    label: 'Intra-table Contradiction',
+    desc: 'Contradictory values added to the answer column of the table',
+    group: 'Ambiguity',
+  },
 ];
 
 const TYPE_COLORS = {
