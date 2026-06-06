@@ -692,6 +692,7 @@ function ConfigPanel({ params, onChange, onGenerate, disabled }) {
             <option value="finance">Finance</option>
             <option value="healthcare">Healthcare</option>
             <option value="products">Products</option>
+            <option value="custom">Custom</option>
           </select>
         )}
         {field('Question Type', 'question_type',
@@ -1478,6 +1479,7 @@ function HistoryPage({ onNavigate, defaultApiKey }) {
           <option value="finance">Finance</option>
           <option value="healthcare">Healthcare</option>
           <option value="products">Products</option>
+          <option value="custom">Custom</option>
         </select>
         <select value={filterQtype} onChange={e=>setFilterQtype(e.target.value)} className={selCls}>
           <option value="">All Question Types</option>
@@ -1690,6 +1692,7 @@ function LeaderboardPage() {
           <option value="finance">Finance</option>
           <option value="healthcare">Healthcare</option>
           <option value="products">Products</option>
+          <option value="custom">Custom</option>
         </select>
         <select value={filterQtype} onChange={e=>setFilterQtype(e.target.value)} className={selCls}>
           <option value="">All Question Types</option>
@@ -1963,7 +1966,7 @@ function App() {
               <Ico.Sparkles className="w-3.5 h-3.5 text-white"/>
             </div>
             <span className="font-bold text-slate-900 text-sm hidden sm:block">TabQA Generator</span>
-            <span className="hidden lg:flex items-center badge bg-indigo-100 text-indigo-700 text-[10px]">CIKM 2025</span>
+            <span className="hidden lg:flex items-center badge bg-indigo-100 text-indigo-700 text-[10px]">Submitted to CIKM 2026</span>
           </div>
 
           {/* Nav tabs */}
@@ -2183,7 +2186,7 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-5 px-4 mt-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-          <span>TabQA Generator — Demo for <strong className="text-slate-600">CIKM 2025</strong></span>
+          <span>TabQA Generator — Demo for <strong className="text-slate-600">Submitted to CIKM 2026</strong></span>
           <span>Built on <a href="https://github.com/softlab-unimore/Gradino" target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline font-medium">Gradino</a> by softlab-unimore</span>
         </div>
       </footer>

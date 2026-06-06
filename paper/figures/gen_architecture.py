@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TabgenQA — publication-quality system-overview figure for CIKM 2025.
+TabgenQA — publication-quality system-overview figure for Submitted to CIKM 2026.
 
 Layout (full two-column width):
   ┌────────────────────────────────────────────────────────────┐
