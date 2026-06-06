@@ -730,6 +730,58 @@ function ConfigPanel({ params, onChange, onGenerate, disabled }) {
           </button>
         </div>
 
+        <div>
+          <label className={labelCls}>Perturbation Set</label>
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              {[['random','Random (default)'],['fixed','Fixed selection']].map(([mode, label]) => (
+                <button key={mode} disabled={disabled}
+                  onClick={() => onChange({
+                    ...params,
+                    perturbation_mode: mode,
+                    ...(mode === 'random' ? { perturbations: PERTURBATION_OPTIONS.map(p => p.value) } : {}),
+                  })}
+                  className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all border ${
+                    (params.perturbation_mode || 'random') === mode
+                      ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 disabled:opacity-50'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {(params.perturbation_mode || 'random') === 'fixed' && (
+              <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 space-y-2.5">
+                {PERTURBATION_OPTIONS.map(opt => {
+                  const checked = (params.perturbations || []).includes(opt.value);
+                  return (
+                    <label key={opt.value} className="flex items-start gap-2.5 cursor-pointer">
+                      <input type="checkbox" disabled={disabled}
+                        className="mt-0.5 accent-indigo-600 w-3.5 h-3.5 flex-shrink-0"
+                        checked={checked}
+                        onChange={e => {
+                          const cur = params.perturbations || [];
+                          const next = e.target.checked
+                            ? [...cur, opt.value]
+                            : cur.filter(p => p !== opt.value);
+                          if (next.length > 0) onChange({ ...params, perturbations: next });
+                        }}
+                      />
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">{opt.label}</p>
+                        <p className="text-[11px] text-slate-400">{opt.desc}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {(params.perturbation_mode || 'random') === 'fixed' && (params.perturbations || []).length === 0 && (
+              <p className="text-[11px] text-red-500 px-1">Select at least one perturbation type.</p>
+            )}
+          </div>
+        </div>
+
         {params.num_tables === -1 && (
           <div className="flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <Ico.AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"/>
@@ -1065,6 +1117,11 @@ function EvaluateModal({ taskId, instanceCount, defaultApiKey, onClose, onDone }
 /* ============================================================
    SHARED CONSTANTS
    ============================================================ */
+const PERTURBATION_OPTIONS = [
+  { value: 'unit_converted',     label: 'Unit Converted',     desc: 'Tables where measurement units are converted' },
+  { value: 'not_unit_converted', label: 'Not Unit Converted', desc: 'Tables with original measurement units' },
+];
+
 const TYPE_COLORS = {
   openai: 'bg-green-100 text-green-700',
   claude: 'bg-orange-100 text-orange-700',
@@ -1119,9 +1176,18 @@ function EvalDetailModal({ evalId, evalInfo, onClose }) {
               {' · '}{evalInfo.total} instances
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
-            <Ico.X className="w-5 h-5"/>
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!loading && correct.length > 0 && (
+              <a href={`/api/evaluate/${evalId}/download/correct`} download
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors whitespace-nowrap">
+                <Ico.Download className="w-3.5 h-3.5"/>
+                Download Correct ({correct.length})
+              </a>
+            )}
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
+              <Ico.X className="w-5 h-5"/>
+            </button>
+          </div>
         </div>
 
         {/* Filter tabs */}
@@ -1701,6 +1767,8 @@ function App() {
     col_cardinality: 20,
     num_columns: 21,
     sequential: false,
+    perturbation_mode: 'random',
+    perturbations: PERTURBATION_OPTIONS.map(p => p.value),
   });
 
   const [taskId, setTaskId] = useState(null);
